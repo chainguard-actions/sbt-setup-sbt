@@ -8,6 +8,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
+| v1.1.23 | [`v1.1.23`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.1.23) | [`93e926c`](https://github.com/sbt/setup-sbt/commit/93e926cbdb4a428e41b4ef754124ec82925ffdc2) |
 | v1.2.0 | [`v1.2.0`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.2.0) | [`4ed7b7e`](https://github.com/sbt/setup-sbt/commit/4ed7b7ec4bfa2074fe48554c09e341267397247c) |
 | v1.2.1 | [`v1.2.1`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.2.1) | [`af116cc`](https://github.com/sbt/setup-sbt/commit/af116cce31c00823d3903ce687f9cda3a4f19f1b) |
 
