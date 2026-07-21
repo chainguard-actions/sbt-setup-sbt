@@ -15,6 +15,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | v1.3.0 | [`v1.3.0`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.3.0) | [`18c5326`](https://github.com/sbt/setup-sbt/commit/18c5326132e2b0900fd6bd70f8b2b212364d11c8) |
 | v1.4.0 | [`v1.4.0`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.4.0) | [`3afe9cf`](https://github.com/sbt/setup-sbt/commit/3afe9cf056c5d139bfc46579af1192d77a2f0821) |
 | v1.5.0 | [`v1.5.0`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.0) | [`66fb437`](https://github.com/sbt/setup-sbt/commit/66fb4376e81982c7d92a4074170846fff88e2e30) |
+| v1.5.2 | [`v1.5.2`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.2) | [`6444f4c`](https://github.com/sbt/setup-sbt/commit/6444f4c8111de4b9059c3975def104b03cfaa5f0) |
 
 ## Privacy
 
