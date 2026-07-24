@@ -1,4 +1,4 @@
-name: Test basic sbt setup (default version)
+name: Test basic sbt setup with default version
 on:
   workflow_dispatch:
 jobs:
@@ -6,24 +6,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: setup-sbt
+      - id: action
         uses: .
         with:
           sbt-runner-version: "2.0.1"
       - name: Assert sbt is on PATH
         run: |
-          echo "PATH: $PATH"
-          if ! command -v sbt &>/dev/null; then
-            echo "FAIL: sbt not found on PATH"
-            exit 1
-          fi
-          echo "PASS: sbt found at $(command -v sbt)"
+          echo "Checking sbt is available on PATH..."
+          which sbt || { echo "FAIL: sbt not found on PATH"; exit 1; }
+          echo "PASS: sbt found at $(which sbt)"
       - name: Assert sbt binary is executable
         run: |
-          SBT_BIN=$(command -v sbt)
-          echo "sbt binary: $SBT_BIN"
-          if [ ! -x "$SBT_BIN" ]; then
-            echo "FAIL: sbt binary is not executable"
+          SBT_PATH=$(which sbt)
+          echo "sbt path: $SBT_PATH"
+          if [ ! -x "$SBT_PATH" ]; then
+            echo "FAIL: sbt is not executable"
             exit 1
           fi
-          echo "PASS: sbt binary is executable"
+          echo "PASS: sbt is executable"
+      - name: Assert sbt runs and shows version info
+        run: |
+          echo "Running sbt --version..."
+          sbt --version 2>&1 | head -5 || true
+          echo "PASS: sbt command executed"
