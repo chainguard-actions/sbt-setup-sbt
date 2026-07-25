@@ -1,0 +1,29 @@
+name: Test sbt setup with custom version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup-sbt
+        uses: .
+        with:
+          sbt-runner-version: "1.10.7"
+      - name: Assert sbt is on PATH
+        run: |
+          echo "which sbt: $(which sbt || echo 'NOT FOUND')"
+          if ! command -v sbt &>/dev/null; then
+            echo "FAIL: sbt not found on PATH after custom version install"
+            exit 1
+          fi
+          echo "PASS: sbt is on PATH"
+      - name: Assert sbt binary exists at expected tool path
+        run: |
+          TOOL_PATH="$RUNNER_TOOL_CACHE/sbt/1.10.7/sbt/bin/sbt"
+          echo "Checking: $TOOL_PATH"
+          if [ ! -f "$TOOL_PATH" ]; then
+            echo "FAIL: sbt binary not found at expected tool cache path: $TOOL_PATH"
+            exit 1
+          fi
+          echo "PASS: sbt binary found at $TOOL_PATH"
