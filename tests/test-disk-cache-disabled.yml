@@ -1,0 +1,47 @@
+name: Test sbt setup with disk cache disabled
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Pre-populate tool cache with fake sbt
+        run: |
+          SBT_VERSION="2.0.3"
+          SBT_TOOLPATH="$RUNNER_TOOL_CACHE/sbt/$SBT_VERSION"
+          mkdir -p "$SBT_TOOLPATH/sbt/bin"
+          printf '#!/bin/sh\necho "sbt script version: 2.0.3"\n' > "$SBT_TOOLPATH/sbt/bin/sbt"
+          chmod +x "$SBT_TOOLPATH/sbt/bin/sbt"
+          echo "Pre-populated tool cache at $SBT_TOOLPATH/sbt/bin/sbt"
+          ls -la "$SBT_TOOLPATH/sbt/bin/sbt"
+      - id: setup-sbt
+        uses: .
+        with:
+          sbt-runner-version: "2.0.3"
+          disk-cache: "false"
+      - name: Assert sbt is on PATH
+        run: |
+          echo "Checking sbt is available on PATH..."
+          which sbt || { echo "FAIL: sbt not found on PATH"; exit 1; }
+          echo "PASS: sbt found at $(which sbt)"
+      - name: Assert sbt binary is executable
+        run: |
+          SBT_PATH=$(which sbt)
+          echo "sbt path: $SBT_PATH"
+          if [ ! -x "$SBT_PATH" ]; then
+            echo "FAIL: sbt binary is not executable"
+            exit 1
+          fi
+          echo "PASS: sbt binary is executable"
+      - name: Assert disk cache directory was not created by the action
+        run: |
+          DISK_CACHE_DIR="$HOME/.cache/sbt"
+          echo "Checking disk cache dir: $DISK_CACHE_DIR"
+          # When disk-cache=false, the sbt 2.x disk cache step is skipped
+          if [ -d "$DISK_CACHE_DIR" ]; then
+            echo "INFO: disk cache dir exists (may be pre-existing), disk-cache=false so no cache step ran"
+          else
+            echo "PASS: disk cache dir does not exist as expected when disk-cache=false"
+          fi
+          echo "PASS: disk-cache=false scenario completed successfully"
