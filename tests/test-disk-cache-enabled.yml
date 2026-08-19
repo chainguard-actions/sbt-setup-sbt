@@ -1,4 +1,4 @@
-name: Test sbt setup with custom version
+name: Test sbt setup with disk cache enabled
 on:
   workflow_dispatch:
 jobs:
@@ -7,12 +7,12 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Setup sbt with custom version
+      - name: Setup sbt with disk cache enabled
         id: setup
         uses: .
         with:
-          sbt-runner-version: "1.10.7"
-          disk-cache: "false"
+          sbt-runner-version: "1.12.12"
+          disk-cache: "true"
 
       - name: Assert sbt is on PATH
         run: |
@@ -30,9 +30,9 @@ jobs:
           fi
           echo "PASS: sbt is executable"
 
-      - name: Assert sbt tool path contains version
+      - name: Assert sbt tool path is set up correctly
         env:
-          SBT_RUNNER_VERSION: "1.10.7"
+          SBT_RUNNER_VERSION: "1.12.12"
         run: |
           SBT_TOOLPATH="$RUNNER_TOOL_CACHE/sbt/$SBT_RUNNER_VERSION"
           echo "Expected tool path: $SBT_TOOLPATH"
