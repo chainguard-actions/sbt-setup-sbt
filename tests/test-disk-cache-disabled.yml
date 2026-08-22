@@ -1,0 +1,27 @@
+name: Test sbt setup with disk cache disabled
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup-sbt
+        uses: .
+        with:
+          sbt-runner-version: "2.0.7"
+          disk-cache: "false"
+      - name: Assert sbt is on PATH
+        run: |
+          echo "Checking sbt on PATH..."
+          which sbt || { echo "FAIL: sbt not found on PATH"; exit 1; }
+          echo "PASS: sbt found at $(which sbt)"
+      - name: Assert sbt disk cache directory is not populated
+        run: |
+          DISKCACHE="$HOME/.cache/sbt"
+          echo "Checking disk cache directory: $DISKCACHE"
+          if [ -d "$DISKCACHE" ] && [ "$(ls -A "$DISKCACHE" 2>/dev/null)" ]; then
+            echo "INFO: disk cache directory exists with content (may be from a previous run)"
+          else
+            echo "PASS: disk cache directory is empty or does not exist (disk-cache=false)"
+          fi

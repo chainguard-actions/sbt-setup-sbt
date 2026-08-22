@@ -1,0 +1,31 @@
+name: Test sbt setup with disk cache enabled
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup-sbt
+        uses: .
+        with:
+          sbt-runner-version: "2.0.7"
+          disk-cache: "true"
+      - name: Assert sbt is on PATH
+        run: |
+          echo "Checking sbt on PATH..."
+          which sbt || { echo "FAIL: sbt not found on PATH"; exit 1; }
+          echo "PASS: sbt found at $(which sbt)"
+      - name: Assert sbt binary exists and is executable
+        run: |
+          SBT_BIN="$(which sbt)"
+          echo "sbt binary: $SBT_BIN"
+          if [ ! -f "$SBT_BIN" ]; then
+            echo "FAIL: sbt binary file not found at $SBT_BIN"
+            exit 1
+          fi
+          if [ ! -x "$SBT_BIN" ]; then
+            echo "FAIL: sbt binary is not executable"
+            exit 1
+          fi
+          echo "PASS: sbt binary exists and is executable"
