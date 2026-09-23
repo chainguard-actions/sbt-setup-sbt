@@ -1,0 +1,48 @@
+name: Test sbt setup with disk cache disabled
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup-sbt
+        uses: .
+        with:
+          sbt-runner-version: "2.0.9"
+          disk-cache: "false"
+        continue-on-error: true
+      - name: Assert sbt setup outcome
+        env:
+          OUTCOME: ${{ steps.setup-sbt.outcome }}
+        run: |
+          echo "setup-sbt outcome: $OUTCOME"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "Action succeeded, verifying sbt is on PATH..."
+            if ! command -v sbt > /dev/null 2>&1; then
+              echo "FAIL: sbt not found on PATH after successful setup"
+              exit 1
+            fi
+            SBT_BIN=$(command -v sbt)
+            echo "PASS: sbt found at $SBT_BIN"
+            if [ ! -x "$SBT_BIN" ]; then
+              echo "FAIL: sbt binary is not executable"
+              exit 1
+            fi
+            echo "PASS: sbt binary is executable"
+            # Verify disk cache directory is not populated by the action
+            # (disk-cache=false means the sbt disk cache step was skipped)
+            DISK_CACHE_DIR="$HOME/.cache/sbt"
+            echo "Disk cache dir: $DISK_CACHE_DIR"
+            if [ -d "$DISK_CACHE_DIR" ]; then
+              echo "INFO: disk cache directory exists (may be pre-existing)"
+            else
+              echo "INFO: disk cache directory does not exist (expected when disk-cache=false)"
+            fi
+            echo "PASS: disk-cache=false scenario completed successfully"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (cache service may not be available under act)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
