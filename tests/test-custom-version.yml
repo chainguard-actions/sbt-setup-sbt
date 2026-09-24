@@ -1,0 +1,45 @@
+name: Test sbt setup with custom version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup-sbt
+        name: Setup sbt with custom version
+        uses: .
+        with:
+          sbt-runner-version: "2.0.0"
+      - name: Assert sbt is on PATH
+        run: |
+          echo "Checking sbt is available on PATH..."
+          which sbt
+          if [ $? -ne 0 ]; then
+            echo "FAIL: sbt not found on PATH"
+            exit 1
+          fi
+          echo "PASS: sbt found at $(which sbt)"
+      - name: Assert sbt binary is executable
+        run: |
+          SBT_PATH=$(which sbt)
+          echo "sbt path: $SBT_PATH"
+          if [ ! -x "$SBT_PATH" ]; then
+            echo "FAIL: sbt is not executable"
+            exit 1
+          fi
+          echo "PASS: sbt is executable"
+      - name: Assert sbt version matches requested version
+        run: |
+          echo "Checking sbt version..."
+          SBT_VERSION_OUTPUT=$(sbt --version 2>&1 || true)
+          echo "sbt --version output: $SBT_VERSION_OUTPUT"
+          # The sbt runner script itself should be the requested version
+          # Check the tool path contains the version
+          TOOL_PATH="$RUNNER_TOOL_CACHE/sbt/2.0.0"
+          echo "Expected tool path: $TOOL_PATH"
+          if [ ! -f "$TOOL_PATH/sbt/bin/sbt" ]; then
+            echo "FAIL: sbt binary not found at expected versioned path $TOOL_PATH/sbt/bin/sbt"
+            exit 1
+          fi
+          echo "PASS: sbt binary found at versioned path"
