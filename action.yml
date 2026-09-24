@@ -74,7 +74,7 @@ runs:
     - name: Cache sbt distribution
       id: cache-dir
       if: steps.cache-tool-dir.outputs.cache-hit != 'true'
-      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      uses: chainguard-actions/actions-cache@38c9e2f39b3b539d2c7bdb22ccc9cb381ee084b7 # v6.1.0
       with:
         path: ${{ steps.cache-paths.outputs.sbt_toolpath }}
         key: ${{ steps.cache-paths.outputs.sbt_cachekey }}
@@ -93,7 +93,7 @@ runs:
     - name: sbt 2.x disk cache
       id: disk-cache
       if: inputs.disk-cache == 'true'
-      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      uses: chainguard-actions/actions-cache@38c9e2f39b3b539d2c7bdb22ccc9cb381ee084b7 # v6.1.0
       with:
         path: ${{ steps.cache-paths.outputs.sbt_diskcache }}
         key: ${{ steps.cache-paths.outputs.sbt_diskcachekey }}-${{ steps.cache-paths.outputs.sbt_monday }}-${{ hashFiles('**/*.sbt', '**/*.properties') }}
