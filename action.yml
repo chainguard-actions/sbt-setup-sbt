@@ -36,21 +36,21 @@ runs:
         SBT_RUNNER_VERSION: ${{ inputs.sbt-runner-version }}
         SBT_CACHE_KEY_VERSION: 1.1.6
       run: |
-        SAFE_SBT_RUNNER_VERSION=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')
+        safe_version=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')
         if [[ "$RUNNER_OS" == "Windows" ]]; then
-          echo "sbt_toolpath=$RUNNER_TOOL_CACHE\\sbt\\$SAFE_SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"
+          echo "sbt_toolpath=$RUNNER_TOOL_CACHE\\sbt\\$safe_version" >> "$GITHUB_OUTPUT"
           echo "sbt_downloadpath=$RUNNER_TEMP\\_sbt" >> "$GITHUB_OUTPUT"
           echo "sbt_diskcache=$HOME\\AppData\\Local\\sbt" >> "$GITHUB_OUTPUT"
         elif [[ "$RUNNER_OS" == "macOS" ]]; then
-          echo "sbt_toolpath=$RUNNER_TOOL_CACHE/sbt/$SAFE_SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"
+          echo "sbt_toolpath=$RUNNER_TOOL_CACHE/sbt/$safe_version" >> "$GITHUB_OUTPUT"
           echo "sbt_downloadpath=$RUNNER_TEMP/_sbt" >> "$GITHUB_OUTPUT"
           echo "sbt_diskcache=$HOME/Library/Caches/sbt" >> "$GITHUB_OUTPUT"
         else
-          echo "sbt_toolpath=$RUNNER_TOOL_CACHE/sbt/$SAFE_SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"
+          echo "sbt_toolpath=$RUNNER_TOOL_CACHE/sbt/$safe_version" >> "$GITHUB_OUTPUT"
           echo "sbt_downloadpath=$RUNNER_TEMP/_sbt" >> "$GITHUB_OUTPUT"
           echo "sbt_diskcache=$HOME/.cache/sbt" >> "$GITHUB_OUTPUT"
         fi
-        echo "sbt_cachekey=$RUNNER_OS-sbt-$SAFE_SBT_RUNNER_VERSION-$SBT_CACHE_KEY_VERSION" >> "$GITHUB_OUTPUT"
+        echo "sbt_cachekey=$RUNNER_OS-sbt-$safe_version-$SBT_CACHE_KEY_VERSION" >> "$GITHUB_OUTPUT"
         echo "sbt_diskcachekey=$RUNNER_OS-sbt-diskcache-$SBT_CACHE_KEY_VERSION" >> "$GITHUB_OUTPUT"
     - name: Check Tool Cache
       id: cache-tool-dir
@@ -58,23 +58,24 @@ runs:
       env:
         SBT_TOOLPATH: "${{ steps.cache-paths.outputs.sbt_toolpath }}"
       run: |
-        if [[ -f "$SBT_TOOLPATH/sbt/bin/sbt" ]]; then
+        safe_toolpath=$(printf '%s' "$SBT_TOOLPATH" | tr -d '\n\r')
+        if [[ -f "$safe_toolpath/sbt/bin/sbt" ]]; then
           echo "cache-hit=true" >> "$GITHUB_OUTPUT"
         else
-          mkdir -p "$SBT_TOOLPATH"
+          mkdir -p "$safe_toolpath"
           echo "cache-hit=false" >> "$GITHUB_OUTPUT"
         fi
     - name: Cache sbt distribution
       id: cache-dir
       if: steps.cache-tool-dir.outputs.cache-hit != 'true'
-      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      uses: chainguard-actions/actions-cache@b5b76c7016521bd34554159c882773b3df2e994a # v5.0.5
       with:
         path: ${{ steps.cache-paths.outputs.sbt_toolpath }}
         key: ${{ steps.cache-paths.outputs.sbt_cachekey }}
     - name: sbt 2.x disk cache
       id: disk-cache
       if: inputs.disk-cache == 'true'
-      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      uses: chainguard-actions/actions-cache@b5b76c7016521bd34554159c882773b3df2e994a # v5.0.5
       with:
         path: ${{ steps.cache-paths.outputs.sbt_diskcache }}
         key: ${{ steps.cache-paths.outputs.sbt_diskcachekey }}
@@ -204,10 +205,13 @@ runs:
       env:
         SBT_TOOLPATH: "${{ steps.cache-paths.outputs.sbt_toolpath }}"
       run: |
-        cd "$SBT_TOOLPATH"
+        safe_toolpath=$(printf '%s' "$SBT_TOOLPATH" | tr -d '\n\r')
+        cd "$safe_toolpath"
         ls sbt/bin/sbt
         if [[ "$RUNNER_OS" == "Windows" ]]; then
-          echo "$PWD\\sbt\\bin" >> "$GITHUB_PATH"
+          safe_pwd=$(printf '%s' "$PWD" | tr -d '\n\r')
+          echo "${safe_pwd}\\sbt\\bin" >> "$GITHUB_PATH"
         else
-          echo "$PWD/sbt/bin" >> "$GITHUB_PATH"
+          safe_pwd=$(printf '%s' "$PWD" | tr -d '\n\r')
+          echo "${safe_pwd}/sbt/bin" >> "$GITHUB_PATH"
         fi
