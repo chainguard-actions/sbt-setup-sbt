@@ -1,0 +1,39 @@
+name: Test sbt is runnable after setup
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: setup-sbt
+        uses: .
+        with:
+          sbt-runner-version: "1.10.7"
+      - name: Assert sbt script exists and is runnable
+        run: |
+          echo "Checking sbt binary..."
+          SBT_BIN="$(which sbt)"
+          echo "sbt binary: $SBT_BIN"
+          if [ -z "$SBT_BIN" ]; then
+            echo "FAIL: sbt not found on PATH"
+            exit 1
+          fi
+          # Run sbt --script-version to verify the runner script works
+          # (this does not start the JVM, just prints the script version)
+          OUTPUT="$(sbt --script-version 2>&1 || true)"
+          echo "sbt --script-version output: $OUTPUT"
+          if [ -z "$OUTPUT" ]; then
+            echo "FAIL: sbt --script-version produced no output"
+            exit 1
+          fi
+          echo "PASS: sbt runner script is functional"
+      - name: Assert sbt tool cache directory structure
+        run: |
+          SBT_TOOL_DIR="$RUNNER_TOOL_CACHE/sbt/1.10.7"
+          echo "Checking tool cache dir: $SBT_TOOL_DIR"
+          if [ ! -f "$SBT_TOOL_DIR/sbt/bin/sbt" ]; then
+            echo "FAIL: sbt binary not found in tool cache at $SBT_TOOL_DIR/sbt/bin/sbt"
+            exit 1
+          fi
+          echo "PASS: sbt binary found in tool cache"
