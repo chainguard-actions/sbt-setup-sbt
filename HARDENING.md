@@ -10,42 +10,40 @@
 
 **Harden Agent Version:** `2`
 
-Action **sbt--setup-sbt/v1.5.6** was hardened automatically. 3 finding(s) were identified and resolved across 1 iteration(s).
+Action **sbt--setup-sbt/v1.5.6** was hardened automatically. 2 finding(s) were identified and resolved across 1 iteration(s).
 
 ## Findings Fixed
 
-### unpinned-uses (severity: high)
-
-The workflow uses action references pinned to mutable tags instead of full 40-character commit SHAs. `actions/checkout@v7` and `actions/setup-java@v5` can be silently updated by the action authors, enabling supply-chain attacks. They must be pinned to a full SHA (e.g., `actions/checkout@<40-hex-sha> # v7`).
-
-Locations:
-
-- `.github/workflows/ci.yml:24`
-- `.github/workflows/ci.yml:26`
-
-### permissions (severity: medium)
-
-The workflow file ci.yml has no top-level `permissions:` key and the single `test` job also has no `permissions:` key. Without explicit permissions, the workflow inherits the default repository permissions (which may include `contents: write` and other broad scopes). A minimal `permissions:` block should be added.
-
-Locations:
-
-- `.github/workflows/ci.yml:1`
-
 ### github-env-injection (severity: high)
 
-In the 'Set up cache paths' step of action.yml, the env var `SBT_RUNNER_VERSION` is populated from `${{ inputs.sbt-runner-version }}` (caller-controlled) and then written directly to `$GITHUB_OUTPUT` in multiple echo statements (e.g., `echo "sbt_toolpath=...\\$SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"` and `echo "sbt_cachekey=...$SBT_RUNNER_VERSION..." >> "$GITHUB_OUTPUT"`) without the required sanitization step (`printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r'`). An attacker supplying a newline-containing version string could inject arbitrary key=value pairs into GITHUB_OUTPUT, potentially hijacking subsequent step outputs.
+In the 'Set up cache paths' step, the env var $SBT_RUNNER_VERSION (sourced from inputs.sbt-runner-version, a caller-controlled value) is written directly into $GITHUB_OUTPUT multiple times without the required sanitization step (printf '%s' ... | tr -d '\n\r'). For example: `echo "sbt_toolpath=$RUNNER_TOOL_CACHE/sbt/$SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"` and `echo "sbt_cachekey=$RUNNER_OS-$RUNNER_ARCH-sbt-runner-$SBT_RUNNER_VERSION-..." >> "$GITHUB_OUTPUT"`. A version string containing embedded newlines could inject arbitrary key=value pairs into the step output context, potentially poisoning downstream steps.
 
 Locations:
 
 - `action.yml:27`
+- `action.yml:31`
+- `action.yml:36`
+- `action.yml:41`
+- `action.yml:42`
+
+### github-env-injection (severity: high)
+
+In the 'Setup PATH' step, the env var $SBT_TOOLPATH (sourced from steps.cache-paths.outputs.sbt_toolpath, which itself embeds the caller-controlled inputs.sbt-runner-version) is written directly into $GITHUB_PATH without the required sanitization step (printf '%s' ... | tr -d '\n\r'). For example: `echo "$PWD/sbt/bin" >> "$GITHUB_PATH"`. Because $SBT_TOOLPATH is set from the unsanitized output of the prior step, a version string containing newlines could inject arbitrary entries into the runner's PATH.
+
+Locations:
+
+- `action.yml:196`
+- `action.yml:198`
 
 ## Iteration Notes
 
 ### Iteration 1
 
-**Fixes applied:** unpinned-uses, permissions, github-env-injection
+**Fixes applied:** github-env-injection
 
 **Notes:**
 
-1. ci.yml: Pinned actions/checkout@v7 → @3d3c42e5aac5ba805825da76410c181273ba90b1 # v7 and actions/setup-java@v5 → @03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5. 2. ci.yml: Added top-level `permissions: contents: read` block (minimum needed for checkout-based CI). 3. action.yml: In the 'Set up cache paths' step, added `SAFE_SBT_RUNNER_VERSION=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')` to strip newlines from the caller-controlled sbt-runner-version input before writing it to $GITHUB_OUTPUT, preventing newline injection attacks.
+Fixed two github-env-injection findings in action.yml:
+1. 'Set up cache paths' step (lines 27-42): Added sanitization of SBT_RUNNER_VERSION via `SAFE_SBT_RUNNER_VERSION=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')` before using it in all GITHUB_OUTPUT writes (sbt_toolpath and sbt_cachekey lines).
+2. 'Setup PATH' step (lines 196-198): Added sanitization of SBT_TOOLPATH via `SAFE_SBT_TOOLPATH=$(printf '%s' "$SBT_TOOLPATH" | tr -d '\n\r')` and used the sanitized value for the `cd` command, so that `$PWD` (and thus the GITHUB_PATH entry) is derived from the sanitized path.
 
