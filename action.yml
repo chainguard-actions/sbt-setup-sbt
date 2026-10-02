@@ -36,29 +36,28 @@ runs:
         SBT_RUNNER_VERSION: ${{ inputs.sbt-runner-version }}
         SBT_CACHE_KEY_VERSION: 1.5.3
       run: |
-        # Sanitize caller-controlled input to prevent newline injection into GITHUB_OUTPUT
-        SAFE_SBT_RUNNER_VERSION=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')
+        SBT_RUNNER_VERSION=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')
         JDK_VERSION=0
         if [[ -x "$(command -v java)" ]]; then
           JDK_VERSION=$(java -version 2>&1 | head -n 1 | sed -e 's/.*"\(.*\)"\(.*\)/\1/; 1q')
         fi
         if [[ "$RUNNER_OS" == "Windows" ]]; then
-          echo "sbt_toolpath=$RUNNER_TOOL_CACHE\\sbt\\$SAFE_SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"
+          echo "sbt_toolpath=$RUNNER_TOOL_CACHE\\sbt\\$SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"
           echo "sbt_downloadpath=$RUNNER_TEMP\\_sbt" >> "$GITHUB_OUTPUT"
           echo "sbt_diskcache=$LOCALAPPDATA\\sbt" >> "$GITHUB_OUTPUT"
           echo "sbt_monday=$(date -d "last Monday" +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
         elif [[ "$RUNNER_OS" == "macOS" ]]; then
-          echo "sbt_toolpath=$RUNNER_TOOL_CACHE/sbt/$SAFE_SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"
+          echo "sbt_toolpath=$RUNNER_TOOL_CACHE/sbt/$SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"
           echo "sbt_downloadpath=$RUNNER_TEMP/_sbt" >> "$GITHUB_OUTPUT"
           echo "sbt_diskcache=$HOME/Library/Caches/sbt" >> "$GITHUB_OUTPUT"
           echo "sbt_monday=$(date -v-monday -v+0d +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
         else
-          echo "sbt_toolpath=$RUNNER_TOOL_CACHE/sbt/$SAFE_SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"
+          echo "sbt_toolpath=$RUNNER_TOOL_CACHE/sbt/$SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"
           echo "sbt_downloadpath=$RUNNER_TEMP/_sbt" >> "$GITHUB_OUTPUT"
           echo "sbt_diskcache=$HOME/.cache/sbt" >> "$GITHUB_OUTPUT"
           echo "sbt_monday=$(date -d "last Monday" +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
         fi
-        echo "sbt_cachekey=$RUNNER_OS-$RUNNER_ARCH-sbt-runner-$SAFE_SBT_RUNNER_VERSION-$SBT_CACHE_KEY_VERSION" >> "$GITHUB_OUTPUT"
+        echo "sbt_cachekey=$RUNNER_OS-$RUNNER_ARCH-sbt-runner-$SBT_RUNNER_VERSION-$SBT_CACHE_KEY_VERSION" >> "$GITHUB_OUTPUT"
         echo "sbt_diskcachekey=$RUNNER_OS-$RUNNER_ARCH-java$JDK_VERSION-sbt-diskcache-$SBT_CACHE_KEY_VERSION" >> "$GITHUB_OUTPUT"
     - name: Check tool cache
       id: cache-tool-dir
@@ -75,7 +74,7 @@ runs:
     - name: Cache sbt distribution
       id: cache-dir
       if: steps.cache-tool-dir.outputs.cache-hit != 'true'
-      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      uses: chainguard-actions/actions-cache@244dfed44d8c4e917b332280fb2c1063eda3d9be # v6.1.0
       with:
         path: ${{ steps.cache-paths.outputs.sbt_toolpath }}
         key: ${{ steps.cache-paths.outputs.sbt_cachekey }}
@@ -94,7 +93,7 @@ runs:
     - name: sbt 2.x disk cache
       id: disk-cache
       if: inputs.disk-cache == 'true'
-      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      uses: chainguard-actions/actions-cache@244dfed44d8c4e917b332280fb2c1063eda3d9be # v6.1.0
       with:
         path: ${{ steps.cache-paths.outputs.sbt_diskcache }}
         key: ${{ steps.cache-paths.outputs.sbt_diskcachekey }}-${{ steps.cache-paths.outputs.sbt_monday }}-${{ hashFiles('**/*.sbt', '**/*.properties') }}
@@ -225,12 +224,12 @@ runs:
       env:
         SBT_TOOLPATH: "${{ steps.cache-paths.outputs.sbt_toolpath }}"
       run: |
-        # Sanitize toolpath (derived from caller-controlled input) to prevent newline injection into GITHUB_PATH
-        SAFE_SBT_TOOLPATH=$(printf '%s' "$SBT_TOOLPATH" | tr -d '\n\r')
-        cd "$SAFE_SBT_TOOLPATH"
+        cd "$SBT_TOOLPATH"
         ls sbt/bin/sbt
         if [[ "$RUNNER_OS" == "Windows" ]]; then
-          echo "$PWD\\sbt\\bin" >> "$GITHUB_PATH"
+          safe_path=$(printf '%s' "$PWD\\sbt\\bin" | tr -d '\n\r')
+          echo "$safe_path" >> "$GITHUB_PATH"
         else
-          echo "$PWD/sbt/bin" >> "$GITHUB_PATH"
+          safe_path=$(printf '%s' "$PWD/sbt/bin" | tr -d '\n\r')
+          echo "$safe_path" >> "$GITHUB_PATH"
         fi
