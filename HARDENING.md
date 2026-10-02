@@ -10,20 +10,20 @@
 
 **Harden Agent Version:** `2`
 
-Action **sbt--setup-sbt/v1.2.1** was hardened automatically. 1 finding(s) were identified and resolved across 3 iteration(s).
+Action **sbt--setup-sbt/v1.2.1** was hardened automatically. 1 finding(s) were identified and resolved across 2 iteration(s).
 
 ## Findings Fixed
 
 ### github-env-injection (severity: high)
 
-In the 'Set up cache paths' step, the env var SBT_RUNNER_VERSION is populated from inputs.sbt-runner-version (an attacker-controlled value) and then written to $GITHUB_OUTPUT multiple times without the required sanitization step (printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r'). A caller supplying a version string containing embedded newlines could inject arbitrary key=value pairs into GITHUB_OUTPUT, potentially overwriting outputs consumed by later steps. Affected lines include the echo statements writing sbt_toolpath (Windows, macOS, and Linux branches) and sbt_cachekey.
+In the 'Set up cache paths' step, the env var `SBT_RUNNER_VERSION` is populated from `inputs.sbt-runner-version` (a caller-controlled input) and then written unsanitized to `$GITHUB_OUTPUT` in multiple echo statements (e.g., `echo "sbt_toolpath=$RUNNER_TOOL_CACHE/sbt/$SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"` and `echo "sbt_cachekey=$RUNNER_OS-sbt-$SBT_RUNNER_VERSION-$SBT_CACHE_KEY_VERSION" >> "$GITHUB_OUTPUT"`). If an attacker supplies a version string containing embedded newlines, they can inject arbitrary `key=value` pairs into `$GITHUB_OUTPUT`, potentially overwriting outputs consumed by later steps. The required sanitization step (`safe=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')`) is absent before every write.
 
 Locations:
 
-- `action.yml:26`
-- `action.yml:31`
-- `action.yml:36`
-- `action.yml:40`
+- `action.yml:27`
+- `action.yml:32`
+- `action.yml:37`
+- `action.yml:42`
 
 ## Iteration Notes
 
@@ -33,21 +33,13 @@ Locations:
 
 **Notes:**
 
-Added sanitization of SBT_RUNNER_VERSION at the start of the 'Set up cache paths' step's run script. The attacker-controlled input is now sanitized via `SAFE_SBT_RUNNER_VERSION=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')` before being written to $GITHUB_OUTPUT. All four affected echo statements (Windows sbt_toolpath, macOS sbt_toolpath, Linux sbt_toolpath, and sbt_cachekey) now use the sanitized variable, preventing newline injection attacks.
+Added sanitization of SBT_RUNNER_VERSION at the start of the 'Set up cache paths' run script. The caller-controlled input is now stripped of newlines and carriage returns via `SAFE_SBT_RUNNER_VERSION=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')` before being used in any `$GITHUB_OUTPUT` writes. All four echo statements that previously used `$SBT_RUNNER_VERSION` in output writes (sbt_toolpath on Windows, sbt_toolpath on macOS, sbt_toolpath on Linux, and sbt_cachekey) now use the sanitized `$SAFE_SBT_RUNNER_VERSION` variable.
 
 ### Iteration 2
-
-**Fixes applied:** script-injection
-
-**Notes:**
-
-Fixed script-injection in the 'Download and Install sbt' step of action.yml. Added sanitization of SBT_RUNNER_VERSION at the start of the run block using `printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r'` to produce SAFE_SBT_RUNNER_VERSION, then replaced all unquoted uses of $SBT_RUNNER_VERSION in curl URLs, file paths, and the unzip command with properly quoted ${SAFE_SBT_RUNNER_VERSION}. This prevents shell metacharacter injection from attacker-controlled version strings.
-
-### Iteration 3
 
 **Fixes applied:** github-env-injection
 
 **Notes:**
 
-Fixed the 'Setup PATH' step in action.yml (around line 160) by sanitizing $PWD before writing to $GITHUB_PATH. Added `SAFE_PWD=$(printf '%s' "$PWD" | tr -d '\n\r')` and replaced `$PWD` with `${SAFE_PWD}` in both the Windows and non-Windows branches. This prevents an attacker-controlled `inputs.sbt-runner-version` containing newline characters from injecting arbitrary entries into $GITHUB_PATH.
+Fixed the 'Setup PATH' step in action.yml (line ~211) to sanitize the path value before writing to $GITHUB_PATH. The fix uses `safe=$(printf '%s' "$PWD/sbt/bin" | tr -d '\n\r')` and then `echo "$safe" >> "$GITHUB_PATH"` for both the Windows and non-Windows branches. This prevents any embedded newlines in the `steps.cache-paths.outputs.sbt_toolpath` step output from injecting arbitrary entries into $GITHUB_PATH.
 
