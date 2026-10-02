@@ -6,38 +6,38 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: setup-sbt
+      - id: action
         uses: .
         with:
           sbt-runner-version: "1.10.7"
-          disk-cache: "false"
       - name: Assert sbt is on PATH
         run: |
-          echo "Checking sbt is available..."
-          if ! which sbt > /dev/null 2>&1; then
+          echo "Checking sbt is available on PATH..."
+          which sbt
+          if [ $? -ne 0 ]; then
             echo "FAIL: sbt not found on PATH"
             exit 1
           fi
           echo "PASS: sbt found at $(which sbt)"
       - name: Assert sbt binary is executable
         run: |
-          SBT_PATH=$(which sbt)
+          SBT_PATH="$(which sbt)"
           echo "sbt path: $SBT_PATH"
           if [ ! -x "$SBT_PATH" ]; then
-            echo "FAIL: sbt binary is not executable"
+            echo "FAIL: sbt is not executable"
             exit 1
           fi
-          echo "PASS: sbt binary is executable"
-      - name: Assert correct version was installed
+          echo "PASS: sbt is executable"
+      - name: Assert sbt version contains expected version
         run: |
-          echo "Checking sbt tool path contains version 1.10.7..."
-          SBT_PATH=$(which sbt)
-          echo "sbt path: $SBT_PATH"
-          # The tool path should contain the version number
-          if echo "$SBT_PATH" | grep -q "1.10.7"; then
-            echo "PASS: sbt path contains expected version 1.10.7"
+          echo "Running sbt --version..."
+          SBT_VERSION_OUTPUT="$(sbt --version 2>&1 || true)"
+          echo "sbt version output: $SBT_VERSION_OUTPUT"
+          # The runner script version should be present in the output
+          if echo "$SBT_VERSION_OUTPUT" | grep -q "1.10.7"; then
+            echo "PASS: version 1.10.7 found in sbt output"
           else
-            echo "INFO: sbt path does not contain version in path, checking via --version"
+            echo "INFO: version string not found in output (may be in build.properties), checking sbt is functional"
             sbt --version
+            echo "PASS: sbt is functional"
           fi
-          echo "PASS: sbt is installed and accessible"

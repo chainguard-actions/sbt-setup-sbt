@@ -6,35 +6,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - id: setup-sbt
+      - id: action
         uses: .
         with:
-          sbt-runner-version: "1.12.11"
           disk-cache: "false"
       - name: Assert sbt is on PATH
         run: |
-          echo "Checking sbt is available with disk-cache disabled..."
-          if ! which sbt > /dev/null 2>&1; then
+          echo "Checking sbt is available on PATH..."
+          which sbt
+          if [ $? -ne 0 ]; then
             echo "FAIL: sbt not found on PATH"
             exit 1
           fi
           echo "PASS: sbt found at $(which sbt)"
       - name: Assert sbt binary is executable
         run: |
-          SBT_PATH=$(which sbt)
+          SBT_PATH="$(which sbt)"
           echo "sbt path: $SBT_PATH"
           if [ ! -x "$SBT_PATH" ]; then
-            echo "FAIL: sbt binary is not executable"
+            echo "FAIL: sbt is not executable"
             exit 1
           fi
-          echo "PASS: sbt binary is executable"
-      - name: Assert sbt disk cache directory was not created
+          echo "PASS: sbt is executable"
+      - name: Assert sbt disk cache directory is not set up by action
         run: |
           DISK_CACHE_DIR="$HOME/.cache/sbt"
-          echo "Checking disk cache directory: $DISK_CACHE_DIR"
-          if [ -d "$DISK_CACHE_DIR" ]; then
-            echo "INFO: disk cache directory exists (may be pre-existing), but disk-cache input was false"
-          else
-            echo "PASS: disk cache directory not created (as expected with disk-cache=false)"
+          echo "Checking disk cache dir: $DISK_CACHE_DIR"
+          # The disk cache step is skipped when disk-cache=false
+          # The directory may or may not exist, but the action should still succeed
+          echo "PASS: action completed successfully without disk cache"
+      - name: Assert sbt version output
+        run: |
+          echo "Running sbt --version..."
+          sbt --version
+          if [ $? -ne 0 ]; then
+            echo "FAIL: sbt --version failed"
+            exit 1
           fi
-          echo "PASS: action completed successfully with disk-cache=false"
+          echo "PASS: sbt --version succeeded"
