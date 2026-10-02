@@ -10,17 +10,17 @@
 
 **Harden Agent Version:** `2`
 
-Action **sbt--setup-sbt/v1.5.7** was hardened automatically. 1 finding(s) were identified and resolved across 2 iteration(s).
+Action **sbt--setup-sbt/v1.5.7** was hardened automatically. 1 finding(s) were identified and resolved across 1 iteration(s).
 
 ## Findings Fixed
 
 ### github-env-injection (severity: high)
 
-The 'Set up cache paths' step sets `SBT_RUNNER_VERSION` from `inputs.sbt-runner-version` via the `env:` block and then writes it unsanitized into `$GITHUB_OUTPUT` multiple times — e.g., `echo "sbt_toolpath=.../$SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"` and `echo "sbt_cachekey=...-$SBT_RUNNER_VERSION-..." >> "$GITHUB_OUTPUT"`. Because `inputs.sbt-runner-version` is caller-controlled, a newline embedded in the value would allow injecting arbitrary key=value pairs into the output file. The required sanitization step (`printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r'`) is absent before every write. This is a case-(d) violation (indirect write of inputs via env var without sanitization).
+The 'Set up cache paths' step maps the user-controlled input `inputs.sbt-runner-version` into the env var `SBT_RUNNER_VERSION`, then writes it to `$GITHUB_OUTPUT` multiple times without sanitization. For example: `echo "sbt_toolpath=$RUNNER_TOOL_CACHE/sbt/$SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"` and `echo "sbt_cachekey=$RUNNER_OS-$RUNNER_ARCH-sbt-runner-$SBT_RUNNER_VERSION-..." >> "$GITHUB_OUTPUT"`. A calling workflow can supply a version string containing newlines, which would allow injecting arbitrary key=value pairs into GITHUB_OUTPUT (and potentially GITHUB_ENV/GITHUB_PATH in downstream steps that consume these outputs). The required sanitization step — `safe=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')` — is absent before every write.
 
 Locations:
 
-- `action.yml:20`
+- `action.yml:22`
 
 ## Iteration Notes
 
@@ -30,13 +30,5 @@ Locations:
 
 **Notes:**
 
-Fixed the github-env-injection finding in the 'Set up cache paths' step of action.yml. Added `SBT_RUNNER_VERSION=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')` as the first line of the run script to sanitize the caller-controlled `inputs.sbt-runner-version` value before it is written to $GITHUB_OUTPUT multiple times (in sbt_toolpath, sbt_cachekey, and other output values). This prevents newline injection attacks where an attacker could embed newlines in the version input to inject arbitrary key=value pairs into the GitHub output file.
-
-### Iteration 2
-
-**Fixes applied:** github-env-injection
-
-**Notes:**
-
-Fixed the 'Setup PATH' step in hardened/action/action.yml. The path written to $GITHUB_PATH is now sanitized using `printf '%s' ... | tr -d '\n\r'` before being written, preventing newline injection via the untrusted `steps.cache-paths.outputs.sbt_toolpath` value. Both Windows and non-Windows branches are sanitized.
+Fixed the github-env-injection vulnerability in the 'Set up cache paths' step of action.yml. Added `SAFE_SBT_RUNNER_VERSION=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')` at the beginning of the run script to sanitize the user-controlled `inputs.sbt-runner-version` input. Replaced all uses of `$SBT_RUNNER_VERSION` in echo commands writing to $GITHUB_OUTPUT with `$SAFE_SBT_RUNNER_VERSION`. This prevents an attacker from injecting arbitrary key=value pairs into GITHUB_OUTPUT by supplying a version string containing newline characters.
 
