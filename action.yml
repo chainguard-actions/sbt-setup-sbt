@@ -209,8 +209,7 @@ runs:
       env:
         SBT_TOOLPATH: "${{ steps.cache-paths.outputs.sbt_toolpath }}"
       run: |
-        SAFE_SBT_TOOLPATH=$(printf '%s' "$SBT_TOOLPATH" | tr -d '\n\r')
-        cd "$SAFE_SBT_TOOLPATH"
+        cd "$SBT_TOOLPATH"
         ls sbt/bin/sbt
         if [[ "$RUNNER_OS" == "Windows" ]]; then
           echo "$PWD\\sbt\\bin" >> "$GITHUB_PATH"
