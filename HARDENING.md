@@ -10,29 +10,19 @@
 
 **Harden Agent Version:** `2`
 
-Action **sbt--setup-sbt/v1.5.11** was hardened automatically. 2 finding(s) were identified and resolved across 1 iteration(s).
+Action **sbt--setup-sbt/v1.5.11** was hardened automatically. 1 finding(s) were identified and resolved across 2 iteration(s).
 
 ## Findings Fixed
 
 ### github-env-injection (severity: high)
 
-In the 'Set up cache paths' step, the env var SBT_RUNNER_VERSION is populated from the user-controlled input `inputs.sbt-runner-version` and then written to $GITHUB_OUTPUT multiple times without the required sanitization (`printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r'`). An attacker who controls the `sbt-runner-version` input can inject newline characters to poison subsequent output variable names or values. Affected writes include: `echo "sbt_toolpath=...$SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"` (Windows, macOS, and Linux branches) and `echo "sbt_cachekey=...$SBT_RUNNER_VERSION..." >> "$GITHUB_OUTPUT"`.
+In the 'Set up cache paths' step, the input `inputs.sbt-runner-version` is mapped to the env var `SBT_RUNNER_VERSION` and then written unsanitized to `$GITHUB_OUTPUT` multiple times without the required `printf '%s' ... | tr -d '\n\r'` sanitization step. For example: `echo "sbt_toolpath=$RUNNER_TOOL_CACHE\\sbt\\$SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"`. An attacker-controlled version string containing newlines could inject arbitrary key=value pairs into GITHUB_OUTPUT, potentially overwriting subsequent step outputs. Additionally, in the 'Setup PATH' step, `$PWD/sbt/bin` (where `$PWD` is derived from `cd "$SBT_TOOLPATH"` and `SBT_TOOLPATH` traces back to the untrusted `inputs.sbt-runner-version` via `steps.cache-paths.outputs.sbt_toolpath`) is written unsanitized to `$GITHUB_PATH`, allowing a newline-containing input to inject arbitrary entries into the runner's PATH.
 
 Locations:
 
 - `action.yml:27`
-- `action.yml:32`
-- `action.yml:39`
-- `action.yml:44`
-
-### github-env-injection (severity: high)
-
-In the 'Setup PATH' step, the env var SBT_TOOLPATH is set from `steps.cache-paths.outputs.sbt_toolpath`, which was itself constructed from the user-controlled `inputs.sbt-runner-version`. The step does `cd "$SBT_TOOLPATH"` and then writes `$PWD/sbt/bin` (or `$PWD\\sbt\\bin` on Windows) to $GITHUB_PATH without sanitization. Because $PWD is derived from the tainted SBT_TOOLPATH, a newline-containing version string can inject additional entries into $GITHUB_PATH, enabling PATH hijacking.
-
-Locations:
-
-- `action.yml:212`
-- `action.yml:214`
+- `action.yml:47`
+- `action.yml:48`
 
 ## Iteration Notes
 
@@ -42,7 +32,15 @@ Locations:
 
 **Notes:**
 
-Fixed two github-env-injection findings in action.yml:
-1. 'Set up cache paths' step: Added sanitization of SBT_RUNNER_VERSION using `printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r'` into SAFE_SBT_RUNNER_VERSION before all GITHUB_OUTPUT writes that include the version string (sbt_toolpath on Windows/macOS/Linux, and sbt_cachekey).
-2. 'Setup PATH' step: Added sanitization of the path before writing to GITHUB_PATH using `printf '%s' "$PWD/sbt/bin" | tr -d '\n\r'` (and the Windows equivalent) stored in safe_path before the echo to $GITHUB_PATH.
+Fixed github-env-injection in action.yml:
+1. 'Set up cache paths' step: Added SAFE_SBT_RUNNER_VERSION=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r') at the start of the run script, then replaced all $SBT_RUNNER_VERSION references in GITHUB_OUTPUT writes with $SAFE_SBT_RUNNER_VERSION to prevent newline injection via the sbt-runner-version input.
+2. 'Setup PATH' step: Added safe_path=$(printf '%s' "$PWD/sbt/bin" | tr -d '\n\r') (and Windows equivalent) before writing to GITHUB_PATH, preventing newline injection via the path derived from the untrusted sbt-runner-version input.
+
+### Iteration 2
+
+**Fixes applied:** script-injection
+
+**Notes:**
+
+Fixed the 'Download and Install sbt' step in action.yml: added sanitization of SBT_RUNNER_VERSION at the start of the run script using `SAFE_SBT_RUNNER_VERSION=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')`, then replaced all uses of the raw `$SBT_RUNNER_VERSION` in curl URLs and unzip commands with `$SAFE_SBT_RUNNER_VERSION`. This is consistent with the sanitization pattern already used in the first step ('Set up cache paths').
 

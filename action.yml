@@ -106,13 +106,14 @@ runs:
         SBT_DOWNLOADPATH: "${{ steps.cache-paths.outputs.sbt_downloadpath }}"
       if: steps.cache-tool-dir2.outputs.cache-hit != 'true'
       run: |
+        SAFE_SBT_RUNNER_VERSION=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')
         mkdir -p "$SBT_DOWNLOADPATH"
-        curl -sL "https://github.com/sbt/sbt/releases/download/v$SBT_RUNNER_VERSION/sbt-$SBT_RUNNER_VERSION.zip" > \
-          "$SBT_DOWNLOADPATH/sbt-$SBT_RUNNER_VERSION.zip"
-        curl -sL "https://github.com/sbt/sbt/releases/download/v$SBT_RUNNER_VERSION/sbt-$SBT_RUNNER_VERSION.zip.asc" > \
-          "$SBT_DOWNLOADPATH/sbt-$SBT_RUNNER_VERSION.zip.asc"
+        curl -sL "https://github.com/sbt/sbt/releases/download/v$SAFE_SBT_RUNNER_VERSION/sbt-$SAFE_SBT_RUNNER_VERSION.zip" > \
+          "$SBT_DOWNLOADPATH/sbt-$SAFE_SBT_RUNNER_VERSION.zip"
+        curl -sL "https://github.com/sbt/sbt/releases/download/v$SAFE_SBT_RUNNER_VERSION/sbt-$SAFE_SBT_RUNNER_VERSION.zip.asc" > \
+          "$SBT_DOWNLOADPATH/sbt-$SAFE_SBT_RUNNER_VERSION.zip.asc"
         cd "$SBT_DOWNLOADPATH"
-        unzip -o "sbt-$SBT_RUNNER_VERSION.zip" -d "$SBT_TOOLPATH"
+        unzip -o "sbt-$SAFE_SBT_RUNNER_VERSION.zip" -d "$SBT_TOOLPATH"
         if [[ ! -f "$SBT_TOOLPATH/sbt/bin/sbt" ]]; then
           exit 1
         fi
