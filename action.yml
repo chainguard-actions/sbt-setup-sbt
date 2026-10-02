@@ -227,7 +227,9 @@ runs:
         cd "$SBT_TOOLPATH"
         ls sbt/bin/sbt
         if [[ "$RUNNER_OS" == "Windows" ]]; then
-          echo "$PWD\\sbt\\bin" >> "$GITHUB_PATH"
+          safe_pwd=$(printf '%s' "$PWD" | tr -d '\n\r')
+          echo "${safe_pwd}\\sbt\\bin" >> "$GITHUB_PATH"
         else
-          echo "$PWD/sbt/bin" >> "$GITHUB_PATH"
+          safe_pwd=$(printf '%s' "$PWD" | tr -d '\n\r')
+          echo "${safe_pwd}/sbt/bin" >> "$GITHUB_PATH"
         fi
