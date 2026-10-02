@@ -223,11 +223,13 @@ runs:
       env:
         SBT_TOOLPATH: "${{ steps.cache-paths.outputs.sbt_toolpath }}"
       run: |
-        SAFE_SBT_TOOLPATH="$(printf '%s' "$SBT_TOOLPATH" | tr -d '\n\r')"
-        cd "$SAFE_SBT_TOOLPATH"
+        SBT_TOOLPATH=$(printf '%s' "$SBT_TOOLPATH" | tr -d '\n\r')
+        cd "$SBT_TOOLPATH"
         ls sbt/bin/sbt
         if [[ "$RUNNER_OS" == "Windows" ]]; then
-          echo "$PWD\\sbt\\bin" >> "$GITHUB_PATH"
+          safe_path=$(printf '%s' "$PWD\\sbt\\bin" | tr -d '\n\r')
+          echo "$safe_path" >> "$GITHUB_PATH"
         else
-          echo "$PWD/sbt/bin" >> "$GITHUB_PATH"
+          safe_path=$(printf '%s' "$PWD/sbt/bin" | tr -d '\n\r')
+          echo "$safe_path" >> "$GITHUB_PATH"
         fi
