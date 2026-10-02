@@ -36,11 +36,11 @@ runs:
         SBT_RUNNER_VERSION: ${{ inputs.sbt-runner-version }}
         SBT_CACHE_KEY_VERSION: 1.5.3
       run: |
-        SAFE_SBT_RUNNER_VERSION=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')
         JDK_VERSION=0
         if [[ -x "$(command -v java)" ]]; then
           JDK_VERSION=$(java -version 2>&1 | head -n 1 | sed -e 's/.*"\(.*\)"\(.*\)/\1/; 1q')
         fi
+        SAFE_SBT_RUNNER_VERSION=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')
         if [[ "$RUNNER_OS" == "Windows" ]]; then
           echo "sbt_toolpath=$RUNNER_TOOL_CACHE\\sbt\\$SAFE_SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"
           echo "sbt_downloadpath=$RUNNER_TEMP\\_sbt" >> "$GITHUB_OUTPUT"
@@ -214,7 +214,9 @@ runs:
         cd "$SBT_TOOLPATH"
         ls sbt/bin/sbt
         if [[ "$RUNNER_OS" == "Windows" ]]; then
-          echo "$PWD\\sbt\\bin" >> "$GITHUB_PATH"
+          safe_path=$(printf '%s' "$PWD\\sbt\\bin" | tr -d '\n\r')
+          echo "$safe_path" >> "$GITHUB_PATH"
         else
-          echo "$PWD/sbt/bin" >> "$GITHUB_PATH"
+          safe_path=$(printf '%s' "$PWD/sbt/bin" | tr -d '\n\r')
+          echo "$safe_path" >> "$GITHUB_PATH"
         fi
