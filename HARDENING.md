@@ -16,19 +16,23 @@ Action **sbt--setup-sbt/v1.2.0** was hardened automatically. 2 finding(s) were i
 
 ### github-env-injection (severity: high)
 
-In the 'Set up cache paths' step, the env var SBT_RUNNER_VERSION is populated from inputs.sbt-runner-version (caller-controlled untrusted input) and is written unsanitized into $GITHUB_OUTPUT multiple times — e.g., `echo "sbt_toolpath=$RUNNER_TOOL_CACHE/sbt/$SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"` and `echo "sbt_cachekey=$RUNNER_OS-sbt-$SBT_RUNNER_VERSION-$SBT_CACHE_KEY_VERSION" >> "$GITHUB_OUTPUT"`. No `printf '%s' ... | tr -d '\n\r'` sanitization is applied before any of these writes. A newline embedded in the version input could inject arbitrary key=value pairs into GITHUB_OUTPUT.
+In the 'Set up cache paths' step, the user-controlled input `inputs.sbt-runner-version` is mapped to the env var `$SBT_RUNNER_VERSION` and then written to `$GITHUB_OUTPUT` multiple times without the required newline-stripping sanitization (`printf '%s' ... | tr -d '\n\r'`). For example: `echo "sbt_toolpath=$RUNNER_TOOL_CACHE/sbt/$SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"` and `echo "sbt_cachekey=$RUNNER_OS-sbt-$SBT_RUNNER_VERSION-$SBT_CACHE_KEY_VERSION" >> "$GITHUB_OUTPUT"`. A malicious caller could inject newlines into the version string to poison subsequent steps' outputs or environment.
 
 Locations:
 
-- `action.yml:22`
+- `action.yml:27`
+- `action.yml:31`
+- `action.yml:35`
+- `action.yml:39`
 
 ### github-env-injection (severity: high)
 
-In the 'Setup PATH' step, the env var SBT_TOOLPATH is populated from steps.cache-paths.outputs.sbt_toolpath, which was itself constructed from the untrusted inputs.sbt-runner-version. After `cd "$SBT_TOOLPATH"`, the value `$PWD/sbt/bin` (tainted by the original input) is written unsanitized to $GITHUB_PATH via `echo "$PWD/sbt/bin" >> "$GITHUB_PATH"`. No `printf '%s' ... | tr -d '\n\r'` sanitization is applied, allowing a newline in the input to inject arbitrary entries into GITHUB_PATH.
+In the 'Setup PATH' step, `steps.cache-paths.outputs.sbt_toolpath` (which embeds the user-controlled `inputs.sbt-runner-version`) is mapped to the env var `$SBT_TOOLPATH` and used in `cd "$SBT_TOOLPATH"`, after which `$PWD/sbt/bin` is written to `$GITHUB_PATH` without the required newline-stripping sanitization (`printf '%s' ... | tr -d '\n\r'`). A malicious caller could inject newlines into the version string to poison `$GITHUB_PATH` and hijack the PATH for subsequent steps.
 
 Locations:
 
-- `action.yml:196`
+- `action.yml:218`
+- `action.yml:220`
 
 ## Iteration Notes
 
@@ -38,9 +42,9 @@ Locations:
 
 **Notes:**
 
-Fixed two github-env-injection findings in hardened/action/action.yml:
+Fixed two github-env-injection findings in action.yml:
 
-1. 'Set up cache paths' step (line 22): Added sanitization of SBT_RUNNER_VERSION using `SAFE_SBT_RUNNER_VERSION=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')` at the start of the run script. All GITHUB_OUTPUT writes that included the version now use `$SAFE_SBT_RUNNER_VERSION` instead of the raw `$SBT_RUNNER_VERSION`.
+1. 'Set up cache paths' step: Sanitized the user-controlled `inputs.sbt-runner-version` (via `$SBT_RUNNER_VERSION`) by computing `SAFE_SBT_RUNNER_VERSION=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')` at the start of the run block. All `$GITHUB_OUTPUT` writes that embed the version now use the sanitized variable, with `safe_toolpath` and `safe_cachekey` intermediate variables also stripped of newlines.
 
-2. 'Setup PATH' step (line 196): Replaced direct `echo "$PWD/sbt/bin" >> "$GITHUB_PATH"` with a sanitized form: `safe_path=$(printf '%s' "$PWD/sbt/bin" | tr -d '\n\r')` followed by `echo "$safe_path" >> "$GITHUB_PATH"` (both for Linux/macOS and Windows paths). This prevents newline injection into GITHUB_PATH from the tainted path value derived from the untrusted sbt-runner-version input.
+2. 'Setup PATH' step: Added `safe_path=$(printf '%s' "$PWD/sbt/bin" | tr -d '\n\r')` (and Windows equivalent) before writing to `$GITHUB_PATH`, preventing newline injection via the user-controlled version embedded in the tool path.
 
