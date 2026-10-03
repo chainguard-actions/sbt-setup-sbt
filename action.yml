@@ -106,7 +106,6 @@ runs:
         SBT_DOWNLOADPATH: "${{ steps.cache-paths.outputs.sbt_downloadpath }}"
       if: steps.cache-tool-dir2.outputs.cache-hit != 'true'
       run: |
-        SBT_RUNNER_VERSION=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')
         mkdir -p "$SBT_DOWNLOADPATH"
         curl -sL "https://github.com/sbt/sbt/releases/download/v$SBT_RUNNER_VERSION/sbt-$SBT_RUNNER_VERSION.zip" > \
           "$SBT_DOWNLOADPATH/sbt-$SBT_RUNNER_VERSION.zip"
@@ -228,9 +227,9 @@ runs:
         cd "$SBT_TOOLPATH"
         ls sbt/bin/sbt
         if [[ "$RUNNER_OS" == "Windows" ]]; then
-          safe=$(printf '%s' "$PWD\\sbt\\bin" | tr -d '\n\r')
-          echo "$safe" >> "$GITHUB_PATH"
+          safe_path=$(printf '%s' "$PWD\\sbt\\bin" | tr -d '\n\r')
+          echo "$safe_path" >> "$GITHUB_PATH"
         else
-          safe=$(printf '%s' "$PWD/sbt/bin" | tr -d '\n\r')
-          echo "$safe" >> "$GITHUB_PATH"
+          safe_path=$(printf '%s' "$PWD/sbt/bin" | tr -d '\n\r')
+          echo "$safe_path" >> "$GITHUB_PATH"
         fi
