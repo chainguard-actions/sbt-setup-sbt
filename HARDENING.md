@@ -16,14 +16,14 @@ Action **sbt--setup-sbt/v1.4.0** was hardened automatically. 1 finding(s) were i
 
 ### github-env-injection (severity: high)
 
-In the 'Set up cache paths' step, the env var `SBT_RUNNER_VERSION` is populated from `inputs.sbt-runner-version` (an attacker-controlled input) and then written directly to `$GITHUB_OUTPUT` multiple times without the required sanitization step (`printf '%s' ... | tr -d '\n\r'`). Specifically, the value is embedded unsanitized in the `sbt_toolpath`, `sbt_cachekey`, and `sbt_diskcachekey` output lines. A malicious caller could inject newlines into the input to poison subsequent `$GITHUB_OUTPUT` entries or `$GITHUB_ENV`/`$GITHUB_PATH` reads downstream.
+In the 'Set up cache paths' step, the env var `SBT_RUNNER_VERSION` is populated from `inputs.sbt-runner-version` (an untrusted caller-controlled input) and then written directly into `$GITHUB_OUTPUT` multiple times without the required sanitization step (`printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r'`). An attacker-controlled value containing newlines could inject arbitrary key=value pairs into GITHUB_OUTPUT, potentially poisoning outputs consumed by downstream steps. Affected writes include: `echo "sbt_toolpath=...$SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"` (lines 27, 32, 37) and `echo "sbt_cachekey=...$SBT_RUNNER_VERSION..." >> "$GITHUB_OUTPUT"` (line 42).
 
 Locations:
 
 - `action.yml:27`
-- `action.yml:31`
-- `action.yml:36`
-- `action.yml:40`
+- `action.yml:32`
+- `action.yml:37`
+- `action.yml:42`
 
 ## Iteration Notes
 
@@ -33,5 +33,5 @@ Locations:
 
 **Notes:**
 
-Fixed the github-env-injection finding in the 'Set up cache paths' step of action.yml. Added a sanitization line at the start of the run script: `SAFE_SBT_RUNNER_VERSION=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')`. Replaced all uses of `$SBT_RUNNER_VERSION` in `$GITHUB_OUTPUT` writes (sbt_toolpath on Windows/macOS/Linux, and sbt_cachekey) with the sanitized `$SAFE_SBT_RUNNER_VERSION` variable. This prevents newline injection attacks via the attacker-controlled `sbt-runner-version` input.
+Fixed the github-env-injection finding in the 'Set up cache paths' step of action.yml. Added `SAFE_SBT_RUNNER_VERSION=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')` at the start of the run script to sanitize the caller-controlled `inputs.sbt-runner-version` value. Replaced all 4 occurrences of `$SBT_RUNNER_VERSION` in GITHUB_OUTPUT writes (sbt_toolpath on Windows, macOS, and Linux branches, plus sbt_cachekey) with `$SAFE_SBT_RUNNER_VERSION` to prevent newline injection attacks.
 
