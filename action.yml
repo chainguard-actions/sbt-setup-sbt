@@ -32,15 +32,15 @@ runs:
         SBT_RUNNER_VERSION: ${{ inputs.sbt-runner-version }}
         SBT_CACHE_KEY_VERSION: 1.1.6
       run: |
-        safe_version=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')
+        SAFE_SBT_RUNNER_VERSION="$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')"
         if [[ "$RUNNER_OS" == "Windows" ]]; then
-          echo "sbt_toolpath=$RUNNER_TOOL_CACHE\\sbt\\$safe_version" >> "$GITHUB_OUTPUT"
-          echo "sbt_downloadpath=$RUNNER_TEMP\\_sbt" >> "$GITHUB_OUTPUT"
+          echo "sbt_toolpath=$RUNNER_TOOL_CACHE\\sbt\\$SAFE_SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"
+          echo "sbt_downloadpath=$RUNNER_TEMP\_sbt" >> "$GITHUB_OUTPUT"
         else
-          echo "sbt_toolpath=$RUNNER_TOOL_CACHE/sbt/$safe_version" >> "$GITHUB_OUTPUT"
+          echo "sbt_toolpath=$RUNNER_TOOL_CACHE/sbt/$SAFE_SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"
           echo "sbt_downloadpath=$RUNNER_TEMP/_sbt" >> "$GITHUB_OUTPUT"
         fi
-        echo "sbt_cachekey=$RUNNER_OS-sbt-$safe_version-$SBT_CACHE_KEY_VERSION" >> "$GITHUB_OUTPUT"
+        echo "sbt_cachekey=$RUNNER_OS-sbt-$SAFE_SBT_RUNNER_VERSION-$SBT_CACHE_KEY_VERSION" >> "$GITHUB_OUTPUT"
     - name: Check Tool Cache
       id: cache-tool-dir
       shell: bash
@@ -68,19 +68,14 @@ runs:
         SBT_DOWNLOADPATH: "${{ steps.cache-paths.outputs.sbt_downloadpath }}"
       if: steps.cache-tool-dir.outputs.cache-hit != 'true' && steps.cache-dir.outputs.cache-hit != 'true'
       run: |
-        safe_version=$(printf '%s' "$SBT_RUNNER_VERSION" | tr -cd '[:alnum:]._-')
-        if [[ -z "$safe_version" ]]; then
-          echo "Error: sbt-runner-version contains no valid characters" >&2
-          exit 1
-        fi
         mkdir -p "$SBT_DOWNLOADPATH"
-        curl -sL "https://github.com/sbt/sbt/releases/download/v${safe_version}/sbt-${safe_version}.zip" > \
-          "$SBT_DOWNLOADPATH/sbt-${safe_version}.zip"
-        curl -sL "https://github.com/sbt/sbt/releases/download/v${safe_version}/sbt-${safe_version}.zip.asc" > \
-          "$SBT_DOWNLOADPATH/sbt-${safe_version}.zip.asc"
+        curl -sL "https://github.com/sbt/sbt/releases/download/v$SBT_RUNNER_VERSION/sbt-$SBT_RUNNER_VERSION.zip" > \
+          "$SBT_DOWNLOADPATH/sbt-$SBT_RUNNER_VERSION.zip"
+        curl -sL "https://github.com/sbt/sbt/releases/download/v$SBT_RUNNER_VERSION/sbt-$SBT_RUNNER_VERSION.zip.asc" > \
+          "$SBT_DOWNLOADPATH/sbt-$SBT_RUNNER_VERSION.zip.asc"
 
         cd "$SBT_DOWNLOADPATH"
-        unzip -o "sbt-${safe_version}.zip" -d "$SBT_TOOLPATH"
+        unzip -o "sbt-$SBT_RUNNER_VERSION.zip" -d "$SBT_TOOLPATH"
     - name: "Verify the sbt distribution signature"
       id: "ampel-verify"
       # Skip on Windows/macOS until go-billy path fix lands: https://github.com/go-git/go-billy/issues/194
@@ -191,10 +186,11 @@ runs:
       env:
         SBT_TOOLPATH: "${{ steps.cache-paths.outputs.sbt_toolpath }}"
       run: |
-        ls "$SBT_TOOLPATH/sbt/bin/sbt"
-        safe_toolpath=$(printf '%s' "$SBT_TOOLPATH" | tr -d '\n\r')
+        cd "$SBT_TOOLPATH"
+        ls sbt/bin/sbt
+        SAFE_SBT_TOOLPATH="$(printf '%s' "$SBT_TOOLPATH" | tr -d '\n\r')"
         if [[ "$RUNNER_OS" == "Windows" ]]; then
-          echo "${safe_toolpath}\\sbt\\bin" >> "$GITHUB_PATH"
+          echo "$SAFE_SBT_TOOLPATH\\sbt\\bin" >> "$GITHUB_PATH"
         else
-          echo "${safe_toolpath}/sbt/bin" >> "$GITHUB_PATH"
+          echo "$SAFE_SBT_TOOLPATH/sbt/bin" >> "$GITHUB_PATH"
         fi
