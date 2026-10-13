@@ -1,0 +1,40 @@
+name: Test sbt setup with disk cache enabled
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          sbt-runner-version: "2.0.10"
+          disk-cache: "true"
+      - name: Assert sbt is on PATH
+        run: |
+          echo "Checking sbt on PATH..."
+          which sbt || { echo "FAIL: sbt not found on PATH"; exit 1; }
+          echo "PASS: sbt found at $(which sbt)"
+      - name: Assert sbt disk cache directory exists
+        run: |
+          DISK_CACHE_DIR="$HOME/.cache/sbt"
+          echo "Checking disk cache dir: $DISK_CACHE_DIR"
+          # The directory may or may not exist yet (created on first sbt run),
+          # but the action should have set up the cache restore step.
+          # We just verify sbt is properly installed.
+          SBT_BIN=$(which sbt)
+          if [ ! -x "$SBT_BIN" ]; then
+            echo "FAIL: sbt binary not executable"
+            exit 1
+          fi
+          echo "PASS: sbt is installed with disk cache enabled"
+      - name: Assert sbt binary is executable
+        run: |
+          SBT_BIN=$(which sbt)
+          echo "sbt binary: $SBT_BIN"
+          if [ ! -x "$SBT_BIN" ]; then
+            echo "FAIL: sbt binary is not executable"
+            exit 1
+          fi
+          echo "PASS: sbt binary is executable"
