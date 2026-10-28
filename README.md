@@ -6,26 +6,26 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 ## Versions
 
-| Version | Tag | Upstream commit |
-|---------|-----|-----------------|
-| v1.1.23 | [`v1.1.23`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.1.23) | [`93e926c`](https://github.com/sbt/setup-sbt/commit/93e926cbdb4a428e41b4ef754124ec82925ffdc2) |
-| v1.1.24 | [`v1.1.24`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.1.24) | [`2e22282`](https://github.com/sbt/setup-sbt/commit/2e222825582620cc38d2a54e674f3c01b7c14f5d) |
-| v1.2.0 | [`v1.2.0`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.2.0) | [`4ed7b7e`](https://github.com/sbt/setup-sbt/commit/4ed7b7ec4bfa2074fe48554c09e341267397247c) |
-| v1.2.1 | [`v1.2.1`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.2.1) | [`af116cc`](https://github.com/sbt/setup-sbt/commit/af116cce31c00823d3903ce687f9cda3a4f19f1b) |
-| v1.3.0 | [`v1.3.0`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.3.0) | [`18c5326`](https://github.com/sbt/setup-sbt/commit/18c5326132e2b0900fd6bd70f8b2b212364d11c8) |
-| v1.4.0 | [`v1.4.0`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.4.0) | [`3afe9cf`](https://github.com/sbt/setup-sbt/commit/3afe9cf056c5d139bfc46579af1192d77a2f0821) |
-| v1.5.0 | [`v1.5.0`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.0) | [`66fb437`](https://github.com/sbt/setup-sbt/commit/66fb4376e81982c7d92a4074170846fff88e2e30) |
-| v1.5.10 | [`v1.5.10`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.10) | [`ce95da6`](https://github.com/sbt/setup-sbt/commit/ce95da69b39609ea153bad087708da5f37366897) |
-| v1.5.11 | [`v1.5.11`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.11) | [`6158cb0`](https://github.com/sbt/setup-sbt/commit/6158cb0903b8ceeae04f830055f3155e1b6a5ad7) |
-| v1.5.12 | [`v1.5.12`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.12) | [`ecad189`](https://github.com/sbt/setup-sbt/commit/ecad189dd245444b9ae0a0cd5922fd938b88906f) |
-| v1.5.2 | [`v1.5.2`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.2) | [`6444f4c`](https://github.com/sbt/setup-sbt/commit/6444f4c8111de4b9059c3975def104b03cfaa5f0) |
-| v1.5.3 | [`v1.5.3`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.3) | [`b759a67`](https://github.com/sbt/setup-sbt/commit/b759a67d710ffdefc1e31cb554c6206e64c94123) |
-| v1.5.4 | [`v1.5.4`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.4) | [`f6db8ab`](https://github.com/sbt/setup-sbt/commit/f6db8ab474efba716fc7f04441ab33714e4825af) |
-| v1.5.5 | [`v1.5.5`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.5) | [`d059c39`](https://github.com/sbt/setup-sbt/commit/d059c39de700f4cc5cb64f9f56577315e44a984e) |
-| v1.5.6 | [`v1.5.6`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.6) | [`bfea3c5`](https://github.com/sbt/setup-sbt/commit/bfea3c5f48abd221b04a6df4798aa5eb8b6a2baf) |
-| v1.5.7 | [`v1.5.7`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.7) | [`8feba82`](https://github.com/sbt/setup-sbt/commit/8feba82adc7f01ddcf8165b86f778bdb5b82cebc) |
-| v1.5.8 | [`v1.5.8`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.8) | [`c7d2d62`](https://github.com/sbt/setup-sbt/commit/c7d2d6258b4bd0d3ec5129e6b3453199d3c79729) |
-| v1.5.9 | [`v1.5.9`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.9) | [`82da71d`](https://github.com/sbt/setup-sbt/commit/82da71df4e122282484a99a8d70096bc2369dbd8) |
+| Version | Tag | Upstream commit | Hardening report |
+|---------|-----|-----------------|------------------|
+| v1.1.23 | [`v1.1.23`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.1.23) | [`93e926c`](https://github.com/sbt/setup-sbt/commit/93e926cbdb4a428e41b4ef754124ec82925ffdc2) | [`HARDENING.md`](https://github.com/chainguard-actions/sbt-setup-sbt/blob/v1.1.23/HARDENING.md) |
+| v1.1.24 | [`v1.1.24`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.1.24) | [`2e22282`](https://github.com/sbt/setup-sbt/commit/2e222825582620cc38d2a54e674f3c01b7c14f5d) | [`HARDENING.md`](https://github.com/chainguard-actions/sbt-setup-sbt/blob/v1.1.24/HARDENING.md) |
+| v1.2.0 | [`v1.2.0`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.2.0) | [`4ed7b7e`](https://github.com/sbt/setup-sbt/commit/4ed7b7ec4bfa2074fe48554c09e341267397247c) | [`HARDENING.md`](https://github.com/chainguard-actions/sbt-setup-sbt/blob/v1.2.0/HARDENING.md) |
+| v1.2.1 | [`v1.2.1`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.2.1) | [`af116cc`](https://github.com/sbt/setup-sbt/commit/af116cce31c00823d3903ce687f9cda3a4f19f1b) | [`HARDENING.md`](https://github.com/chainguard-actions/sbt-setup-sbt/blob/v1.2.1/HARDENING.md) |
+| v1.3.0 | [`v1.3.0`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.3.0) | [`18c5326`](https://github.com/sbt/setup-sbt/commit/18c5326132e2b0900fd6bd70f8b2b212364d11c8) | [`HARDENING.md`](https://github.com/chainguard-actions/sbt-setup-sbt/blob/v1.3.0/HARDENING.md) |
+| v1.4.0 | [`v1.4.0`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.4.0) | [`3afe9cf`](https://github.com/sbt/setup-sbt/commit/3afe9cf056c5d139bfc46579af1192d77a2f0821) | [`HARDENING.md`](https://github.com/chainguard-actions/sbt-setup-sbt/blob/v1.4.0/HARDENING.md) |
+| v1.5.0 | [`v1.5.0`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.0) | [`66fb437`](https://github.com/sbt/setup-sbt/commit/66fb4376e81982c7d92a4074170846fff88e2e30) | [`HARDENING.md`](https://github.com/chainguard-actions/sbt-setup-sbt/blob/v1.5.0/HARDENING.md) |
+| v1.5.10 | [`v1.5.10`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.10) | [`ce95da6`](https://github.com/sbt/setup-sbt/commit/ce95da69b39609ea153bad087708da5f37366897) | [`HARDENING.md`](https://github.com/chainguard-actions/sbt-setup-sbt/blob/v1.5.10/HARDENING.md) |
+| v1.5.11 | [`v1.5.11`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.11) | [`6158cb0`](https://github.com/sbt/setup-sbt/commit/6158cb0903b8ceeae04f830055f3155e1b6a5ad7) | [`HARDENING.md`](https://github.com/chainguard-actions/sbt-setup-sbt/blob/v1.5.11/HARDENING.md) |
+| v1.5.12 | [`v1.5.12`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.12) | [`ecad189`](https://github.com/sbt/setup-sbt/commit/ecad189dd245444b9ae0a0cd5922fd938b88906f) | [`HARDENING.md`](https://github.com/chainguard-actions/sbt-setup-sbt/blob/v1.5.12/HARDENING.md) |
+| v1.5.2 | [`v1.5.2`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.2) | [`6444f4c`](https://github.com/sbt/setup-sbt/commit/6444f4c8111de4b9059c3975def104b03cfaa5f0) | [`HARDENING.md`](https://github.com/chainguard-actions/sbt-setup-sbt/blob/v1.5.2/HARDENING.md) |
+| v1.5.3 | [`v1.5.3`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.3) | [`b759a67`](https://github.com/sbt/setup-sbt/commit/b759a67d710ffdefc1e31cb554c6206e64c94123) | [`HARDENING.md`](https://github.com/chainguard-actions/sbt-setup-sbt/blob/v1.5.3/HARDENING.md) |
+| v1.5.4 | [`v1.5.4`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.4) | [`f6db8ab`](https://github.com/sbt/setup-sbt/commit/f6db8ab474efba716fc7f04441ab33714e4825af) | [`HARDENING.md`](https://github.com/chainguard-actions/sbt-setup-sbt/blob/v1.5.4/HARDENING.md) |
+| v1.5.5 | [`v1.5.5`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.5) | [`d059c39`](https://github.com/sbt/setup-sbt/commit/d059c39de700f4cc5cb64f9f56577315e44a984e) | [`HARDENING.md`](https://github.com/chainguard-actions/sbt-setup-sbt/blob/v1.5.5/HARDENING.md) |
+| v1.5.6 | [`v1.5.6`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.6) | [`bfea3c5`](https://github.com/sbt/setup-sbt/commit/bfea3c5f48abd221b04a6df4798aa5eb8b6a2baf) | [`HARDENING.md`](https://github.com/chainguard-actions/sbt-setup-sbt/blob/v1.5.6/HARDENING.md) |
+| v1.5.7 | [`v1.5.7`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.7) | [`8feba82`](https://github.com/sbt/setup-sbt/commit/8feba82adc7f01ddcf8165b86f778bdb5b82cebc) | [`HARDENING.md`](https://github.com/chainguard-actions/sbt-setup-sbt/blob/v1.5.7/HARDENING.md) |
+| v1.5.8 | [`v1.5.8`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.8) | [`c7d2d62`](https://github.com/sbt/setup-sbt/commit/c7d2d6258b4bd0d3ec5129e6b3453199d3c79729) | [`HARDENING.md`](https://github.com/chainguard-actions/sbt-setup-sbt/blob/v1.5.8/HARDENING.md) |
+| v1.5.9 | [`v1.5.9`](https://github.com/chainguard-actions/sbt-setup-sbt/tree/v1.5.9) | [`82da71d`](https://github.com/sbt/setup-sbt/commit/82da71df4e122282484a99a8d70096bc2369dbd8) | [`HARDENING.md`](https://github.com/chainguard-actions/sbt-setup-sbt/blob/v1.5.9/HARDENING.md) |
 
 ## Privacy
 
