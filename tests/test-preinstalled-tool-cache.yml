@@ -1,0 +1,38 @@
+name: Test preinstalled tool cache hit
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Pre-populate tool cache with a fake sbt runner
+        run: |
+          DIR="$RUNNER_TOOL_CACHE/sbt/9.9.9-fake/sbt/bin"
+          mkdir -p "$DIR"
+          printf '#!/bin/sh\necho fake-sbt-runner\n' > "$DIR/sbt"
+          chmod +x "$DIR/sbt"
+      - id: action
+        uses: .
+        with:
+          sbt-runner-version: 9.9.9-fake
+          disk-cache: "false"
+      - name: Assert the preinstalled runner is used (no download)
+        run: |
+          ACTUAL="$(command -v sbt || true)"
+          echo "sbt on PATH: $ACTUAL"
+          case "$ACTUAL" in
+            */sbt/9.9.9-fake/sbt/bin/sbt) ;;
+            *) echo "FAIL: sbt on PATH is not the preinstalled runner"; exit 1 ;;
+          esac
+          OUT="$(sbt)"
+          echo "output: $OUT"
+          if [ "$OUT" != "fake-sbt-runner" ]; then
+            echo "FAIL: preinstalled runner was replaced"
+            exit 1
+          fi
+          if [ -f "$RUNNER_TEMP/_sbt/sbt-9.9.9-fake.zip" ]; then
+            echo "FAIL: download should have been skipped"
+            exit 1
+          fi
+          echo "PASS"

@@ -1,0 +1,29 @@
+name: Test basic usage
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+      - name: Assert sbt installed in tool cache and on PATH
+        run: |
+          EXPECTED="$RUNNER_TOOL_CACHE/sbt/2.0.12/sbt/bin/sbt"
+          echo "expected: $EXPECTED"
+          if [ ! -f "$EXPECTED" ]; then
+            echo "FAIL: sbt runner script not found at $EXPECTED"
+            exit 1
+          fi
+          ACTUAL="$(command -v sbt || true)"
+          echo "sbt on PATH: $ACTUAL"
+          if [ -z "$ACTUAL" ]; then
+            echo "FAIL: sbt not on PATH"
+            exit 1
+          fi
+          case "$ACTUAL" in
+            */sbt/2.0.12/sbt/bin/sbt) ;;
+            *) echo "FAIL: unexpected sbt location"; exit 1 ;;
+          esac
+          echo "PASS"
