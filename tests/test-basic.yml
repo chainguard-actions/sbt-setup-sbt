@@ -1,0 +1,32 @@
+name: Test basic usage (default runner version)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+      - name: Assert sbt runner installed in tool cache
+        run: |
+          EXPECTED="$RUNNER_TOOL_CACHE/sbt/2.0.12/sbt/bin/sbt"
+          echo "expected: $EXPECTED"
+          ls -la "$RUNNER_TOOL_CACHE/sbt/2.0.12/sbt/bin" || true
+          if [ ! -f "$EXPECTED" ]; then
+            echo "FAIL: sbt script not found at $EXPECTED"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert sbt is on PATH
+        run: |
+          SBT_PATH="$(command -v sbt || true)"
+          echo "sbt on PATH: $SBT_PATH"
+          if [ -z "$SBT_PATH" ]; then
+            echo "FAIL: sbt not on PATH"
+            exit 1
+          fi
+          case "$SBT_PATH" in
+            */sbt/2.0.12/sbt/bin/sbt) echo "PASS" ;;
+            *) echo "FAIL: unexpected sbt path"; exit 1 ;;
+          esac

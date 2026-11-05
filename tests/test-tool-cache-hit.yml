@@ -1,0 +1,45 @@
+name: Test second invocation uses existing tool cache
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: first
+        uses: .
+        with:
+          disk-cache: "false"
+      - name: Record first install timestamp
+        run: |
+          F="$RUNNER_TOOL_CACHE/sbt/2.0.12/sbt/bin/sbt"
+          if [ ! -f "$F" ]; then
+            echo "FAIL: first install missing $F"
+            exit 1
+          fi
+          stat -c %Y "$F" > /tmp/sbt-mtime
+          echo "first mtime: $(cat /tmp/sbt-mtime)"
+      - id: second
+        uses: .
+        with:
+          disk-cache: "false"
+      - name: Assert second run reused tool cache
+        run: |
+          F="$RUNNER_TOOL_CACHE/sbt/2.0.12/sbt/bin/sbt"
+          if [ ! -f "$F" ]; then
+            echo "FAIL: sbt missing after second run"
+            exit 1
+          fi
+          NOW="$(stat -c %Y "$F")"
+          echo "first: $(cat /tmp/sbt-mtime) second: $NOW"
+          if [ "$NOW" != "$(cat /tmp/sbt-mtime)" ]; then
+            echo "FAIL: sbt was re-extracted instead of reusing tool cache"
+            exit 1
+          fi
+          SBT_PATH="$(command -v sbt || true)"
+          echo "sbt on PATH: $SBT_PATH"
+          if [ -z "$SBT_PATH" ]; then
+            echo "FAIL: sbt not on PATH"
+            exit 1
+          fi
+          echo "PASS"

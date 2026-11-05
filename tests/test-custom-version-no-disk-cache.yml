@@ -1,0 +1,30 @@
+name: Test custom runner version with disk cache disabled
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          sbt-runner-version: 1.10.7
+          disk-cache: "false"
+      - name: Assert sbt 1.10.7 runner installed
+        run: |
+          EXPECTED="$RUNNER_TOOL_CACHE/sbt/1.10.7/sbt/bin/sbt"
+          echo "expected: $EXPECTED"
+          if [ ! -f "$EXPECTED" ]; then
+            echo "FAIL: sbt script not found at $EXPECTED"
+            exit 1
+          fi
+          echo "PASS"
+      - name: Assert PATH points at requested version
+        run: |
+          SBT_PATH="$(command -v sbt || true)"
+          echo "sbt on PATH: $SBT_PATH"
+          case "$SBT_PATH" in
+            */sbt/1.10.7/sbt/bin/sbt) echo "PASS" ;;
+            *) echo "FAIL: expected sbt from 1.10.7 tool path"; exit 1 ;;
+          esac
