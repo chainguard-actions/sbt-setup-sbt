@@ -4,70 +4,109 @@
 
 > This file was generated automatically by the hardening agent.
 
-**Policy SHA:** `d636be7e43ef829af6e853da6b3c7566db9f72fe`
+**Policy SHA:** `374911c4be584df24e6da57af2d990570ef0f859`
 
 **Test Policy SHA:** `843adf9e4b8f85d0c08b27b9d0b09dd094b54702`
 
 **Harden Agent Version:** `2`
 
-Action **sbt--setup-sbt/v1.5.14** was hardened automatically. 2 finding(s) were identified and resolved across 3 iteration(s).
+Action **sbt--setup-sbt/v1.5.14** was hardened automatically. 3 finding(s) were identified and resolved across 1 iteration(s).
 
 ## Findings Fixed
 
 ### github-env-injection (severity: high)
 
-Step 'Set up cache paths' writes SBT_RUNNER_VERSION to $GITHUB_OUTPUT without the `printf '%s' ... | tr -d '\n\r'` cleaning step. That env var is set from ${{ inputs.sbt-runner-version }}. Affected lines: `echo "sbt_toolpath=$RUNNER_TOOL_CACHE/sbt/$SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"` (and the Windows variant), plus `echo "sbt_cachekey=$RUNNER_OS-$RUNNER_ARCH-sbt-runner-$SBT_RUNNER_VERSION-$SBT_CACHE_KEY_VERSION" >> "$GITHUB_OUTPUT"`. If the input contains a newline, an attacker can add extra outputs or overwrite existing ones.
+Step 'Set up cache paths' writes the env var SBT_RUNNER_VERSION, which comes from inputs.sbt-runner-version, into $GITHUB_OUTPUT with no `printf '%s' ... | tr -d '\n\r'` sanitization. Examples: `echo "sbt_toolpath=$RUNNER_TOOL_CACHE/sbt/$SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"` and `echo "sbt_cachekey=$RUNNER_OS-$RUNNER_ARCH-sbt-runner-$SBT_RUNNER_VERSION-..." >> "$GITHUB_OUTPUT"`. If the input contains a newline, an attacker can add extra output entries (for example, overwrite sbt_toolpath or sbt_downloadpath). The same lines also forward inherited env vars (RUNNER_TOOL_CACHE, RUNNER_TEMP, LOCALAPPDATA, HOME) unsanitized.
 
 Locations:
 
 - `action.yml:27`
-- `action.yml:32`
-- `action.yml:37`
-- `action.yml:42`
 
 ### github-env-injection (severity: high)
 
-Step 'Setup PATH' writes a path to $GITHUB_PATH without the `printf '%s' ... | tr -d '\n\r'` cleaning step: `echo "$PWD/sbt/bin" >> "$GITHUB_PATH"` (and the Windows variant). The path is built from SBT_TOOLPATH, which comes from ${{ steps.cache-paths.outputs.sbt_toolpath }}. That output was itself built from inputs.sbt-runner-version.
+Step 'Setup PATH' does `cd "$SBT_TOOLPATH"` and then writes `$PWD/sbt/bin` (or `$PWD\\sbt\\bin` on Windows) to $GITHUB_PATH with no `printf '%s' ... | tr -d '\n\r'` sanitization. SBT_TOOLPATH comes from steps.cache-paths.outputs.sbt_toolpath, which is built from inputs.sbt-runner-version, so the PATH entry is controlled by the workflow.
 
 Locations:
 
-- `action.yml:205`
+- `action.yml:208`
+
+### prior-fix (severity: high)
+
+Carried forward from this version's previous harden, which fixed it; fix it again unless the code no longer has the problem. The previous harden changed action.yml without recording a finding for it, and this analysis reported nothing there. Re-apply its security changes unless the code no longer needs them. The previous patch:
+```diff
+diff --git a/action.yml b/action.yml
+index c741974..d229165 100644
+--- a/action.yml
++++ b/action.yml
+@@ -12,6 +12,23 @@ inputs:
+ runs:
+   using: "composite"
+   steps:
+     - name: Set up cache paths
+       id: cache-paths
+       shell: bash
+@@ -19,10 +36,19 @@ runs:
+         SBT_RUNNER_VERSION: ${{ inputs.sbt-runner-version }}
+         SBT_CACHE_KEY_VERSION: 1.5.3
+       run: |
++        SBT_RUNNER_VERSION="$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')"
++        RUNNER_TOOL_CACHE="$(printf '%s' "$RUNNER_TOOL_CACHE" | tr -d '\n\r')"
++        RUNNER_TEMP="$(printf '%s' "$RUNNER_TEMP" | tr -d '\n\r')"
++        LOCALAPPDATA="$(printf '%s' "${LOCALAPPDATA:-}" | tr -d '\n\r')"
++        HOME="$(printf '%s' "$HOME" | tr -d '\n\r')"
++        RUNNER_OS="$(printf '%s' "$RUNNER_OS" | tr -d '\n\r')"
++        RUNNER_ARCH="$(printf '%s' "$RUNNER_ARCH" | tr -d '\n\r')"
++        SBT_CACHE_KEY_VERSION="$(printf '%s' "$SBT_CACHE_KEY_VERSION" | tr -d '\n\r')"
+         JDK_VERSION=0
+         if [[ -x "$(command -v java)" ]]; then
+           JDK_VERSION=$(java -version 2>&1 | head -n 1 | sed -e 's/.*"\(.*\)"\(.*\)/\1/; 1q')
+         fi
++        JDK_VERSION="$(printf '%s' "$JDK_VERSION" | tr -d '\n\r')"
+         if [[ "$RUNNER_OS" == "Windows" ]]; then
+           echo "sbt_toolpath=$RUNNER_TOOL_CACHE\\sbt\\$SBT_RUNNER_VERSION" >> "$GITHUB_OUTPUT"
+           echo "sbt_downloadpath=$RUNNER_TEMP\\_sbt" >> "$GITHUB_OUTPUT"
+@@ -56,7 +82,7 @@ runs:
+     - name: Cache sbt distribution
+       id: cache-dir
+       if: steps.cache-tool-dir.outputs.cache-hit != 'true'
+       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+       with:
+         path: ${{ steps.cache-paths.outputs.sbt_toolpath }}
+         key: ${{ steps.cache-paths.outputs.sbt_cachekey }}
+@@ -75,7 +101,7 @@ runs:
+     - name: sbt 2.x disk cache
+       id: disk-cache
+       if: inputs.disk-cache == 'true'
+       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+       with:
+         path: ${{ steps.cache-paths.outputs.sbt_diskcache }}
+         key: ${{ steps.cache-paths.outputs.sbt_diskcachekey }}-${{ steps.cache-paths.outputs.sbt_monday }}-${{ hashFiles('**/*.sbt', '**/*.properties') }}
+@@ -210,7 +236,9 @@ runs:
+         cd "$SBT_TOOLPATH"
+         ls sbt/bin/sbt
+         if [[ "$RUNNER_OS" == "Windows" ]]; then
+-          echo "$PWD\\sbt\\bin" >> "$GITHUB_PATH"
++          SBT_BIN="$PWD\\sbt\\bin"
+         else
+-          echo "$PWD/sbt/bin" >> "$GITHUB_PATH"
++          SBT_BIN="$PWD/sbt/bin"
+         fi
++        SAFE_SBT_BIN="$(printf '%s' "$SBT_BIN" | tr -d '\n\r')"
++        printf '%s\n' "$SAFE_SBT_BIN" >> "$GITHUB_PATH"
+
+```
+
+Locations:
+
+- `action.yml`
 
 ## Iteration Notes
 
 ### Iteration 1
 
-**Fixes applied:** github-env-injection
+**Fixes applied:** github-env-injection, prior-fix
 
 **Notes:**
 
-Both findings are fixed in action.yml. I haven't run the action to test the changes.
-
-- **'Set up cache paths' step:** the first line of the script now strips newlines from the sbt-runner-version input (`SBT_RUNNER_VERSION="$(printf '%s' "$SBT_RUNNER_VERSION" | tr -d '\n\r')"`). Every output built from it (sbt_toolpath on all three runner OSes, and sbt_cachekey) now gets the cleaned value. Nothing else in the step changed.
-- **'Setup PATH' step:** the bin path (Windows or Unix form) is first stored in a variable. It is then written with `printf '%s' "$SBT_BIN_PATH" | tr -d '\n\r' >> "$GITHUB_PATH"`, followed by `echo >> "$GITHUB_PATH"` so the entry still ends in a newline.
-
-### Iteration 2
-
-**Fixes applied:** github-env-injection
-
-**Notes:**
-
-Fixed both github-env-injection findings in action.yml. I haven't run the action to test these changes.
-
-- 'Set up cache paths': added a write_output helper that strips CR/LF from each value before writing key=value to GITHUB_OUTPUT. Every output now goes through it, including the ones built from HOME, LOCALAPPDATA and the RUNNER_* variables. The date result is captured first with '|| true'. Upstream ran date inside echo's arguments, so a failing date never stopped the step, and the '|| true' keeps it that way.
-- 'Setup PATH': the sbt/bin path built from $PWD is now passed through printf '%s' | tr -d '\n\r' right before it is written to GITHUB_PATH, on both Windows and other runners.
-
-### Iteration 3
-
-**Fixes applied:** github-env-injection
-
-**Notes:**
-
-I fixed the github-env-injection finding in action.yml. I haven't run the action to test it.
-
-In the 'Set up cache paths' step, each inherited variable now has newlines and carriage returns stripped (printf '%s' ... | tr -d '\n\r') right after the existing SBT_RUNNER_VERSION line. That covers RUNNER_TOOL_CACHE, RUNNER_TEMP, LOCALAPPDATA, HOME, RUNNER_OS and RUNNER_ARCH, which the finding listed. I also did the same for SBT_CACHE_KEY_VERSION and JDK_VERSION (the version read from `java -version`), since both are written to the outputs too.
-
-The echo lines that write the outputs are unchanged, so a value with no newline produces exactly the same output as before. The two `sbt_monday` lines still pass `date`'s output straight into echo. I left them as upstream wrote them because `date` with a fixed format prints a single line.
-
-LOCALAPPDATA is read as `${LOCALAPPDATA:-}`, since it is normally only set on Windows.
+Re-applied the previous harden's changes to action.yml. In 'Set up cache paths', newlines and carriage returns are now stripped from SBT_RUNNER_VERSION, RUNNER_TOOL_CACHE, RUNNER_TEMP, LOCALAPPDATA, HOME, RUNNER_OS, RUNNER_ARCH, SBT_CACHE_KEY_VERSION and JDK_VERSION with printf '%s' | tr -d '\n\r' before anything is written to $GITHUB_OUTPUT. In 'Setup PATH', the sbt bin path for Windows and Unix is built into a variable, stripped the same way, and written to $GITHUB_PATH with printf. The Windows backslash handling works as before. The actions/cache and carabiner-dev uses: lines were already pinned to commit SHAs, so I left them alone. Nothing has been run to test these changes.
 
