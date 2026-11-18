@@ -1,6 +1,11 @@
 {
   "owner": "sbt",
   "repo": "setup-sbt",
-  "version": "",
-  "url": "https://github.com/sbt/setup-sbt"
+  "version": "v1.5.15",
+  "commit_sha": "7e114eae4f32ec3f93c851c2793376a77f384409",
+  "url": "https://github.com/sbt/setup-sbt",
+  "policy_sha": "374911c4be584df24e6da57af2d990570ef0f859",
+  "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
+  "test_agent_version": "2",
+  "harden_agent_version": "2"
 }
