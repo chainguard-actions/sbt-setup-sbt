@@ -4,9 +4,8 @@
   "version": "v1.5.13",
   "commit_sha": "b113b960ba361e87e08ce02a390d51871b7ee459",
   "url": "https://github.com/sbt/setup-sbt",
-  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "policy_sha": "374911c4be584df24e6da57af2d990570ef0f859",
   "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
   "test_agent_version": "2",
-  "harden_agent_version": "2",
-  "dependency_fingerprint": "sha256:9c1520a0cf6009b6e8b423fff2937de74ef0379f21e0d7e63bc8c4fab67889bf"
+  "harden_agent_version": "2"
 }
